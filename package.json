@@ -8,13 +8,14 @@
     "setup:ts-node": "npm i ts-node-dev --save-dev",
     "setup:tests": "npm install --save-dev @types/jest @babel/preset-typescript babel-jest @babel/core @babel/preset-env",
     "install": "npm install tiny-secp256k1 bip39 bip32 bitcoinjs-lib --save",
-    "watch:dev": "npx tsc *.ts --watch --outDir ./dist" ,
-    "build" : "npm tsc",
+    "watch:dev": "npx tsc *.ts --watch --outDir ./dist",
+    "watch": "npx tsc --watch",
+    "build": "npm tsc",
     "run:javascript": "watch node index.js",
     "dev": "npx ts-node-dev index.ts",
     "test": "npx jest --verbose",
     "test:hd-wallet:ts": "npx jest --verbose hd-wallet.test.ts",
-    "test:hd-wallet": "npx jest --verbose dist/ hd-wallet.test.js"
+    "test:hd-wallet": "npx jest --watch --verbose dist/hd-wallet.test.js"
   },
   "author": "",
   "license": "ISC",
@@ -31,12 +32,15 @@
     "typescript": "^4.7.0-dev.20220218"
   },
   "dependencies": {
+    "@types/web3": "^1.2.2",
     "axios": "^0.27.2",
     "bip32": "^3.0.1",
     "bip39": "^3.0.4",
     "bitcoinjs-lib": "^6.0.1",
     "bs58": "^5.0.0",
     "ecpair": "^2.0.1",
-    "tiny-secp256k1": "^2.2.1"
+    "js-sha3": "^0.8.0",
+    "tiny-secp256k1": "^2.2.1",
+    "web3": "^1.7.3"
   }
 }

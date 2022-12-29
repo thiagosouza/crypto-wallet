@@ -3,86 +3,117 @@ import axios from "axios";
 import { mnemonicToSeed, generateMnemonic, entropyToMnemonic } from "bip39";
 import { Network, networks, payments } from "bitcoinjs-lib";
 
-import { createHDWallet, BIPs, DerivationPaths, HDWallet, getTXUnspent, AddressTypes, CoinTypes } from "./index"
+import { createHDWallet, getTXUnspent } from "./index"
+import { BIPs, DerivationPaths, HDWallet, AddressTypes, CoinTypes, walletParamsDefaults, walletParams } from "./interfaces";
 
 describe("Crypto Wallet HD", () => {
 
     let mnemonicWellKnow = "tooth truth silk body rent ticket text great degree surge space color"
 
-    let walletBitcoinLegacy: HDWallet;
-    let walletSegWit: HDWallet;
-    let walletBech32: HDWallet;
+    let walletBitcoinLegacyBip44: HDWallet
+    let walletBitcoinLegacy: HDWallet
+    let walletBitcoinLegacyContainingPrivateKeys: HDWallet
+    let walletSegWit: HDWallet
+    let walletBech32: HDWallet
 
-    let walletEthereum: HDWallet;
-    let walletEthereumBech32 : HDWallet;
-    let walletDogeCoin: HDWallet;
+    let walletEthereum: HDWallet
+    let walletEthereumBech32: HDWallet
+    // let walletDogeCoin: HDWallet
 
     beforeAll(async () => {
 
+        walletBitcoinLegacyBip44 = await createHDWallet({
+            ...walletParamsDefaults.bip44,
+            mnemonic: mnemonicWellKnow,
+            showPrivateKeys: false,
+            network: networks.bitcoin
+        } as walletParams) as HDWallet;
+
         walletBitcoinLegacy = await createHDWallet({
             mnemonic: mnemonicWellKnow,
-            derivationPath: `m/${BIPs.BIP44}'/0'/0'/0`,
+            derivationPath: DerivationPaths.BTC_BIP44,
             network: networks.bitcoin,
             bip: BIPs.BIP44,
             addressType: AddressTypes.BitcoinLegacy,
-            coinType: CoinTypes.Bitcoin
+            coinType: CoinTypes.Bitcoin,
+            showPrivateKeys: false
+        } /* as walletParams */) as HDWallet;
+
+        walletBitcoinLegacyContainingPrivateKeys = await createHDWallet({
+            mnemonic: mnemonicWellKnow,
+            derivationPath: DerivationPaths.BTC_BIP44,
+            network: networks.bitcoin,
+            bip: BIPs.BIP44,
+            addressType: AddressTypes.BitcoinLegacy,
+            coinType: CoinTypes.Bitcoin,
+            showPrivateKeys: true
         }) as HDWallet;
 
         walletSegWit = await createHDWallet({
             mnemonic: mnemonicWellKnow,
-            derivationPath: `m/${BIPs.BIP49}'/0'/0'/0`,
+            derivationPath: DerivationPaths.BTC_BIP49,
             network: networks.bitcoin,
             bip: BIPs.BIP49,
             addressType: AddressTypes.SegWit,
-            coinType: CoinTypes.Bitcoin
+            coinType: CoinTypes.Bitcoin,
+            showPrivateKeys: false
         }) as HDWallet;
 
         walletBech32 = await createHDWallet({
             mnemonic: mnemonicWellKnow,
-            derivationPath: DerivationPaths.LEDGER, //`m/${BIPs.BIP84}'/0'/0'/0`,
+            derivationPath: DerivationPaths.BTC_LEDGER, //`m/${BIPs.BIP84}'/0'/0'/0`,
             network: networks.bitcoin,
             bip: BIPs.BIP84,
             addressType: AddressTypes.NativeSegWit,
-            coinType: CoinTypes.Bitcoin
+            coinType: CoinTypes.Bitcoin,
+            showPrivateKeys: false
         }) as HDWallet;
 
         walletEthereum = await createHDWallet({
             mnemonic: mnemonicWellKnow,
-            derivationPath: `m/${BIPs.BIP44}'/60'/0'/0`,
+            derivationPath: DerivationPaths.ETH_BIP44,
             coinType: CoinTypes.Ethereum,
             network: networks.bitcoin,
             bip: BIPs.BIP44,
-            addressType: AddressTypes.BitcoinLegacy
+            addressType: AddressTypes.BitcoinLegacy,
+            showPrivateKeys: false
         }) as HDWallet;
 
         walletEthereumBech32 = await createHDWallet({
             mnemonic: mnemonicWellKnow,
-            derivationPath: `m/${BIPs.BIP84}'/60'/0'/0`,
+            derivationPath: DerivationPaths.ETH_BIP84,
             coinType: CoinTypes.Ethereum,
             // network: networks.bitcoin,
             bip: BIPs.BIP84,
-            addressType: AddressTypes.BitcoinLegacy
+            addressType: AddressTypes.BitcoinLegacy,
+            showPrivateKeys: false
         }) as HDWallet;
 
-        walletDogeCoin = await createHDWallet({
-            mnemonic: mnemonicWellKnow,
-            derivationPath: `m/${BIPs.BIP44}'/3'/0'`,
-            coinType: CoinTypes.DogeCoin,
-            network: networks.bitcoin,
-            bip: BIPs.BIP44,
-            addressType: AddressTypes.BitcoinLegacy
-        }) as HDWallet;
+        // walletDogeCoin = await createHDWallet({
+        //     mnemonic: mnemonicWellKnow,
+        //     derivationPath: `m/${BIPs.BIP44}'/3'/0'`,
+        //     coinType: CoinTypes.DogeCoin,
+        //     network: networks.bitcoin,
+        //     bip: BIPs.BIP44,
+        //     addressType: AddressTypes.BitcoinLegacy,
+        //     showPrivateKeys: false
+        // }) as HDWallet;
     });
 
-    test.only("Addresses formats are correct", async () => {
+    test("should be able to create a BIP32 wallet using interfaces", async () => {
+        console.dir(walletBitcoinLegacyBip44, { depth: null, colors: true })
+    })
+
+    test("Addresses formats are correct", async () => {
         // console.dir(walletEthereum, { depth: null, colors: true })
         // console.dir(walletDogeCoin, { depth: null, colors: true })
         // console.dir(walletSegWit, { depth: null, colors: true })
-
-        walletBitcoinLegacy.wallets.map(wallet => expect(wallet.address).toMatch(/^1.*/));
-        walletSegWit.wallets.map(wallet => expect(wallet.address).toMatch(/^3.*/));
-        walletBech32.wallets.map(wallet => expect(wallet.address).toMatch(/^bc1.*/));
+        walletBitcoinLegacy.wallets.map(wallet => expect(wallet.address).toMatch(/^1.*/))
+        walletSegWit.wallets.map(wallet => expect(wallet.address).toMatch(/^3.*/))
+        walletBech32.wallets.map(wallet => expect(wallet.address).toMatch(/^bc1.*/))
     })
+
+
 
     test("Should have the same mnemonic", async () => {
 
@@ -117,11 +148,10 @@ describe("Crypto Wallet HD", () => {
     })
 
 
-    test("Should bring xpub keys and erase private keys ", async () => {
+    test("Should bring xpub keys and erase private keys", async () => {
 
         const { seed, mnemonic, wallets, root } = walletBech32;
         expect(root.neutered().toBase58()).toMatch(/^xpub.*/);
-
         expect(root.neutered().toBase58()).toMatch(
             `xpub661MyMwAqRbcFPgcyvdBYx8bY1f3ehhExhEXcdtQHkUcfhBLqSbgTtbPgrneqNP8H5ztEPMupAmAxNii26zMgbdJnfjwfhB7go2NL5hQs4o`
         );
@@ -153,16 +183,28 @@ describe("Crypto Wallet HD", () => {
         });
     })
 
+    test("should generate properly wallets", async () => {
+        // console.log(walletEthereum.wallets)
 
-    test("should check for DogeCoin format", async()=>{
-        const { seed, mnemonic, wallets, root } = walletDogeCoin;
+        console.dir(walletBitcoinLegacy, { depth: null, colors: true });
+    })
 
-        console.dir(walletEthereum, { depth: null, colors: true });
-        console.dir(walletEthereumBech32, { depth: null, colors: true });
+    // test("should check for DogeCoin format", async () => {
+    //     const { seed, mnemonic, wallets, root } = walletDogeCoin;
 
-        // console.dir(walletDogeCoin.wallets, { depth: null, colors: true });
-        // expect(wallets[0].address).toBe("D5VcJFXn8rhMa6PthptYnAiBd6tqJCwJfs")
-        // expect(wallets[0].publicKey).toBe("0288b809c391bc14b3604d97de73c1a27beef3cfecfdafc628ff25a8a2d28ff17a")
-        // expect(wallets[0].privateKey).toBe("QNfcLvVUxNSNGEFMvZFNFj9rx3vFjJnUQ9qfDNLJvL5CsTkNcwfD")
+    //     // console.dir(walletEthereum, { depth: null, colors: true });
+    //     // console.dir(walletEthereumBech32, { depth: null, colors: true });
+    //     console.dir(walletBech32, { depth: null, colors: true });
+
+    //     // console.dir(walletDogeCoin.wallets, { depth: null, colors: true });
+    //     // expect(wallets[0].address).toBe("D5VcJFXn8rhMa6PthptYnAiBd6tqJCwJfs")
+    //     // expect(wallets[0].publicKey).toBe("0288b809c391bc14b3604d97de73c1a27beef3cfecfdafc628ff25a8a2d28ff17a")
+    //     // expect(wallets[0].privateKey).toBe("QNfcLvVUxNSNGEFMvZFNFj9rx3vFjJnUQ9qfDNLJvL5CsTkNcwfD")
+    // })
+
+    test("Private keys can be hiden or displayed at creation", async () => {
+        walletBitcoinLegacy.wallets.map(wallet => expect(wallet).not.toHaveProperty("privateKey"))
+        walletBitcoinLegacyContainingPrivateKeys.wallets.map(wallet => expect(wallet).toHaveProperty("privateKey"))
+        // console.dir(walletBitcoinLegacyContainingPrivateKeys, {depth:null, colors: true})
     })
 });

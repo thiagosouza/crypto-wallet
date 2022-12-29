@@ -1,16 +1,18 @@
 import {
   BIP32Factory,
-  BIP32Interface,
-  TinySecp256k1Interface,
+  TinySecp256k1Interface as TinySecp256k1Interface_BIP32,
 } from "bip32";
 
-// import {
-//   TinySecp256k1Interface,
-// } from "ecpair";
+import {
+  ECPairAPI,
+  ECPairFactory,
+  ECPairInterface,
+  TinySecp256k1Interface,
+} from "ecpair";
 
 import * as ecc from "tiny-secp256k1";
 
-import { keccak_256,  } from "js-sha3" //ethereum uses it
+import { keccak_256, } from "js-sha3" //ethereum uses it
 
 import {
   mnemonicToSeed,
@@ -21,71 +23,24 @@ import {
   wordlists,
 } from "bip39";
 
-import { Network, networks, payments, Psbt } from "bitcoinjs-lib";
+import { Network, networks, Payment, payments, Psbt } from "bitcoinjs-lib";
 
 // import { createHash } from "crypto";
 
 import axios from "axios";
 
+// import { Eth } from "web3-eth";
 import Web3 from "web3";
+import { walletParams, AddressTypes, BIPs, HDWallet, CoinTypes, Wallet } from "./interfaces";
 let eth = new Web3().eth;
 
-export interface HDWallet {
-  mnemonic: string;
-  seed: string;
-  root: BIP32Interface;
-  account: BIP32Interface;
-  wallets: Wallet[];
-  metadata: { [key: string]: any };
-}
+export async function createHDWallet(params: walletParams = {
+  showPrivateKeys: false,
+  addressType: AddressTypes.NativeSegWit,
+  bip: BIPs.BIP84
+}): Promise<HDWallet | null> {
 
-export interface Wallet {
-  derivedPath: string;
-  address: string;
-  publicKey: string;
-  privateKey: string;
-  metadata: { [key: string]: any };
-}
-
-interface walletParams {
-  derivationPath?: string;
-  coinType?: CoinTypes;
-  network?: Network;
-  mnemonic?: string;
-  bip: BIPs;
-  addressType: AddressTypes
-}
-
-export enum BIPs {
-  BIP32 = 32, // deprecated
-  BIP44 = 44,
-  BIP49 = 49,
-  BIP84 = 84,
-}
-
-//https://github.com/satoshilabs/slips/blob/master/slip-0044.md
-export enum CoinTypes {
-  Bitcoin = "0",
-  Ethereum = "60",
-  DogeCoin = "3"
-}
-
-export enum AddressTypes {
-  BitcoinLegacy = "BitcoinLegacy",
-  SegWit = "SegWit",
-  NativeSegWit = "NativeSegWit",
-}
-
-export enum DerivationPaths {
-  LEDGER = `m/84'/0'/0'/0`
-}
-
-// bip 44 derivation path : `m/44'/0'/0'/0` => m / purpose' / coin_type' / account' / change / address_index
-// bip 32 derivation path : `m/32'/0'/0` =>    m /                         account' / change'/ address_index
-
-export async function createHDWallet(params: walletParams): Promise<HDWallet | null> {
-
-  let { network, derivationPath, coinType, mnemonic, bip, addressType } = params;
+  let { network, derivationPath, coinType, mnemonic, bip, addressType, showPrivateKeys } = params;
   let metadata: any;
 
   if (!coinType) coinType = CoinTypes.Bitcoin;
@@ -106,13 +61,7 @@ export async function createHDWallet(params: walletParams): Promise<HDWallet | n
   // All points on this curve are valid Bitcoin public keys.
   // Secp256k1 - https://river.com/learn/terms/s/secp256k1/
   // Elliptic Curve Digital Signature Algorithm - https://learnmeabitcoin.com/technical/ecdsa
-  const root = BIP32Factory(ecc as TinySecp256k1Interface).fromSeed(seed, network);
-console.log(root)
-  let root2 = keccak_256(seed)
-  console.log(root2)
-
-
-
+  const root = BIP32Factory(ecc as TinySecp256k1Interface_BIP32).fromSeed(seed, network);
 
   let HDWallet: HDWallet = {
     wallets: [],
@@ -127,7 +76,7 @@ console.log(root)
     throw new Error(`List of BIPs must not to be undefined`)
   }
 
-  for (let i: number = 0; i < 6; i++) {
+  for (let i: number = 0; i < 3; i++) {
     let metadata = {};
     const derivationPathDeafult = `m/${bip}'/${coinType}'/0'/0`;
     const derivedPath = root.derivePath(derivationPath || derivationPathDeafult).derive(i);
@@ -138,10 +87,13 @@ console.log(root)
     let publicKey: string = derivedPath.publicKey.toString("hex");
     let address: string;
 
-    let paymentFunctionResult = null;
+    interface IPayment extends Payment {
+      privateKey?: string
+    }
+    let paymentFunctionResult: IPayment | null = null; //| Account;
 
     if (bip == BIPs.BIP44 && addressType == AddressTypes.BitcoinLegacy && coinType == CoinTypes.Bitcoin) {
-      paymentFunctionResult = payments.p2pkh({ network, pubkey });
+      paymentFunctionResult = paymentFunction(payments.p2pkh, network, pubkey);
     }
     else if (bip == BIPs.BIP49 && addressType == AddressTypes.SegWit && coinType == CoinTypes.Bitcoin) {
       paymentFunctionResult = payments.p2sh({ redeem: payments.p2wpkh({ pubkey, network }), network });
@@ -154,9 +106,13 @@ console.log(root)
         derivedPath.privateKey!.toString("hex")
       );
       publicKey = `0x${publicKey}`;
-      privateKey = paymentFunctionResult.privateKey;
+      privateKey = paymentFunctionResult.privateKey!;
+
+      let ec: ECPairInterface = ECPairFactory(ecc as TinySecp256k1Interface).fromPrivateKey(derivedPath.privateKey!);
+      // console.log(privateKey, "private ", `0x${ec.privateKey?.toString('hex')}`);
+      // console.log(publicKey, "public ", `0x${ec.publicKey?.toString('hex')}`);
     }
-    else if (bip == BIPs.BIP44) {
+    else if (bip === BIPs.BIP44) {
       paymentFunctionResult = payments.p2pkh({ network, pubkey });
     }
 
@@ -173,10 +129,10 @@ console.log(root)
       derivedPath: `${derivationPath}/${i}`,
       address,
       publicKey,
-      privateKey,
+      ...(showPrivateKeys ?? false ? { privateKey } : {}),
       metadata,
     } as Wallet;
-
+    // console.log(wallet);
     HDWallet.wallets.push(wallet);
   }
 
@@ -199,3 +155,7 @@ export const getTXUnspent = async (address: string) => {
       return { data: { data: null } };
     });
 }
+function paymentFunction(paymentFunction: any, network: Network | undefined, pubkey: Buffer) {
+  return paymentFunction({ network, pubkey }) as Payment;
+}
+

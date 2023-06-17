@@ -29,6 +29,7 @@ export interface walletParams {
   bip: BIPs;
   addressType: AddressTypes;
   showPrivateKeys: boolean;
+  password?: string;
 }
 
 export enum BIPs {

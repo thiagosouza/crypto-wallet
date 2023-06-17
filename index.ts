@@ -21,18 +21,18 @@ import {
   setDefaultWordlist,
   getDefaultWordlist,
   wordlists,
-} from "bip39";
+} from "bip39"
 
-import { Network, networks, Payment, payments, Psbt } from "bitcoinjs-lib";
+import { Network, Payment, payments, Psbt } from "bitcoinjs-lib"
 
 // import { createHash } from "crypto";
 
-import axios from "axios";
+import { walletParams, AddressTypes, BIPs, HDWallet, CoinTypes, Wallet } from "./interfaces"
 
-// import { Eth } from "web3-eth";
-import Web3 from "web3";
-import { walletParams, AddressTypes, BIPs, HDWallet, CoinTypes, Wallet } from "./interfaces";
-let eth = new Web3().eth;
+
+import { Accounts } from 'web3-eth-accounts';
+import web3 from "web3";
+let accounts = new web3().eth.accounts as Accounts;    
 
 export async function createHDWallet(params: walletParams = {
   showPrivateKeys: false,
@@ -40,7 +40,7 @@ export async function createHDWallet(params: walletParams = {
   bip: BIPs.BIP84
 }): Promise<HDWallet | null> {
 
-  let { network, derivationPath, coinType, mnemonic, bip, addressType, showPrivateKeys } = params;
+  let { network, derivationPath, coinType, mnemonic, bip, addressType, showPrivateKeys, password } = params;
   let metadata: any;
 
   if (!coinType) coinType = CoinTypes.Bitcoin;
@@ -54,14 +54,16 @@ export async function createHDWallet(params: walletParams = {
   if (!new RegExp(`m\/${bip}'?\/`).test(derivationPath!)) {
     throw new Error(`Derivation Path ${derivationPath} is wrong compared to bip ${bip}`);
   }
-
-  const seed = await mnemonicToSeed(mnemonic);
+console.log(password);
+  const seed = (password) ? await mnemonicToSeed(mnemonic, password) : await mnemonicToSeed(mnemonic);
+  const seedPassword = await mnemonicToSeed(mnemonic + ' password');
 
   // Secp256k1 is the name of the elliptic curve used by Bitcoin to implement its public key cryptography. 
   // All points on this curve are valid Bitcoin public keys.
   // Secp256k1 - https://river.com/learn/terms/s/secp256k1/
   // Elliptic Curve Digital Signature Algorithm - https://learnmeabitcoin.com/technical/ecdsa
   const root = BIP32Factory(ecc as TinySecp256k1Interface_BIP32).fromSeed(seed, network);
+  const rootPassword = BIP32Factory(ecc as TinySecp256k1Interface_BIP32).fromSeed(seedPassword, network);
 
   let HDWallet: HDWallet = {
     wallets: [],
@@ -69,6 +71,15 @@ export async function createHDWallet(params: walletParams = {
     seed: seed.toString("hex"),
     root,
     account: root.derivePath(derivationPath?.replace(/(?<account>m\/\d+'?\/\d+'?\/\d+'?).*/, "$1")!), // https://regex101.com/r/lyJ63Z/1
+    metadata
+  } as HDWallet;
+
+  let HDWalletPassword: HDWallet = {
+    wallets: [],
+    mnemonic: mnemonic,
+    seed: seedPassword.toString("hex"),
+    root: rootPassword,
+    account: rootPassword.derivePath(derivationPath?.replace(/(?<account>m\/\d+'?\/\d+'?\/\d+'?).*/, "$1")!), // https://regex101.com/r/lyJ63Z/1
     metadata
   } as HDWallet;
 
@@ -102,7 +113,7 @@ export async function createHDWallet(params: walletParams = {
       paymentFunctionResult = payments.p2wpkh({ network, pubkey });
     }
     else if (coinType == CoinTypes.Ethereum) {
-      paymentFunctionResult = eth.accounts.privateKeyToAccount(
+      paymentFunctionResult = accounts.privateKeyToAccount(
         derivedPath.privateKey!.toString("hex")
       );
       publicKey = `0x${publicKey}`;
@@ -140,22 +151,6 @@ export async function createHDWallet(params: walletParams = {
 }
 
 
-// p2pkh explained here https://learnmeabitcoin.com/technical/p2pkh
-// base 58 explained here https://learnmeabitcoin.com/technical/base58
-// https://learnmeabitcoin.com/technical/mnemonic
-// references: https://flawsomedev.com/posts/bitcoin-wallet-simple/
-
-export const getTXUnspent = async (address: string) => {
-  return axios
-    .get(
-      `https://sochain.com/api/v2/get_tx_unspent/${networks.bitcoin}/${address}`
-    ).then(response => response.data.data)
-    .catch((error) => {
-      console.log(error);
-      return { data: { data: null } };
-    });
-}
 function paymentFunction(paymentFunction: any, network: Network | undefined, pubkey: Buffer) {
   return paymentFunction({ network, pubkey }) as Payment;
 }
-

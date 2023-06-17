@@ -27,6 +27,7 @@
     "module": "CommonJS",                                /* Specify what module code is generated. */
     // "rootDir": "./",                                  /* Specify the root folder within your source files. */
     "moduleResolution": "Node",                       /* Specify how TypeScript looks up a file from a given module specifier. */
+    "traceResolution": true,
     // "baseUrl": "./",                                  /* Specify the base directory to resolve non-relative module names. */
     "paths": { /* Specify a set of entries that re-map imports to additional lookup locations. */
       "@packages/*": ["./node_modules/*"]
@@ -35,7 +36,7 @@
     // "typeRoots": [],                                  /* Specify multiple folders that act like `./node_modules/@types`. */
     // "types": [],                                      /* Specify type package names to be included without being referenced in a source file. */
     // "allowUmdGlobalAccess": true,                     /* Allow accessing UMD globals from modules. */
-    // "resolveJsonModule": true,                        /* Enable importing .json files */
+    "resolveJsonModule": true,                        /* Enable importing .json files */
     // "noResolve": true,                                /* Disallow `import`s, `require`s or `<reference>`s from expanding the number of files TypeScript should add to a project. */
 
     /* JavaScript Support */
@@ -77,7 +78,7 @@
     /* Type Checking */
     "strict": true,                                      /* Enable all strict type-checking options. */
     // "noImplicitAny": true,                            /* Enable error reporting for expressions and declarations with an implied `any` type.. */
-    // "strictNullChecks": true,                         /* When type checking, take into account `null` and `undefined`. */
+    "strictNullChecks": true,                         /* When type checking, take into account `null` and `undefined`. */
     // "strictFunctionTypes": true,                      /* When assigning functions, check to ensure parameters and the return values are subtype-compatible. */
     // "strictBindCallApply": true,                      /* Check that the arguments for `bind`, `call`, and `apply` methods match the original function. */
     // "strictPropertyInitialization": true,             /* Check for class properties that are declared but not set in the constructor. */

@@ -56,32 +56,36 @@ export async function createHDWallet(params: walletParams = {
   }
 console.log(password);
   const seed = (password) ? await mnemonicToSeed(mnemonic, password) : await mnemonicToSeed(mnemonic);
-  const seedPassword = await mnemonicToSeed(mnemonic + ' password');
+  // const seedPassword = await mnemonicToSeed(mnemonic + ' password');
 
   // Secp256k1 is the name of the elliptic curve used by Bitcoin to implement its public key cryptography. 
   // All points on this curve are valid Bitcoin public keys.
   // Secp256k1 - https://river.com/learn/terms/s/secp256k1/
   // Elliptic Curve Digital Signature Algorithm - https://learnmeabitcoin.com/technical/ecdsa
   const root = BIP32Factory(ecc as TinySecp256k1Interface_BIP32).fromSeed(seed, network);
-  const rootPassword = BIP32Factory(ecc as TinySecp256k1Interface_BIP32).fromSeed(seedPassword, network);
+  // const rootPassword = BIP32Factory(ecc as TinySecp256k1Interface_BIP32).fromSeed(seed, network);
+
+  const fingerprint = root.fingerprint.toString('hex');
 
   let HDWallet: HDWallet = {
     wallets: [],
     mnemonic: mnemonic,
     seed: seed.toString("hex"),
+    fingerprint,
     root,
     account: root.derivePath(derivationPath?.replace(/(?<account>m\/\d+'?\/\d+'?\/\d+'?).*/, "$1")!), // https://regex101.com/r/lyJ63Z/1
     metadata
   } as HDWallet;
 
-  let HDWalletPassword: HDWallet = {
-    wallets: [],
-    mnemonic: mnemonic,
-    seed: seedPassword.toString("hex"),
-    root: rootPassword,
-    account: rootPassword.derivePath(derivationPath?.replace(/(?<account>m\/\d+'?\/\d+'?\/\d+'?).*/, "$1")!), // https://regex101.com/r/lyJ63Z/1
-    metadata
-  } as HDWallet;
+  // let HDWalletPassword: HDWallet = {
+  //   wallets: [],
+  //   mnemonic: mnemonic,
+  //   seed: seedPassword.toString("hex"),
+  //   fingerprint,
+  //   root: rootPassword,
+  //   account: rootPassword.derivePath(derivationPath?.replace(/(?<account>m\/\d+'?\/\d+'?\/\d+'?).*/, "$1")!), // https://regex101.com/r/lyJ63Z/1
+  //   metadata
+  // } as HDWallet;
 
   if (!bip) {
     throw new Error(`List of BIPs must not to be undefined`)

@@ -10,7 +10,7 @@ import { BIPs, DerivationPaths, HDWallet, AddressTypes, CoinTypes, walletParamsD
 describe("Crypto Wallet HD", () => {
 
     let mnemonicWellKnow = 'tooth truth silk body rent ticket text great degree surge space color';
-    let password = 'password';
+    let password: string | undefined = 'test1234';
 
     let walletBitcoinLegacyBip44: HDWallet
     let walletBitcoinLegacy: HDWallet
@@ -70,7 +70,7 @@ describe("Crypto Wallet HD", () => {
             bip: BIPs.BIP84,
             addressType: AddressTypes.NativeSegWit,
             coinType: CoinTypes.Bitcoin,
-            showPrivateKeys: false,
+            showPrivateKeys: true,
             ...((password) ? { password } : {})
         }) as HDWallet;
 
@@ -113,15 +113,17 @@ describe("Crypto Wallet HD", () => {
 
     test.only("Should have the same seed", async () => {
         const { seed, mnemonic, wallets, root } = walletBitcoinBech32;
-        // expect(seed).toEqual(
-        //     `c3b33053071792948d400db74118b83d9b13e990498343c0fc841bd386039557de6186d3c2465dce58a4cf3bbef24009f5d2c19be5b781bdc4058a155a682c0e`
-        // );
 
-        expect(seed).toEqual(
-            `aa71eb576ef9ad8d7bda68e43c6eb3e4a59a928d5a1420692e5e4f5d009e483be030fafb25c88da9fccdc84f406abd6846be7f2e8c90b0ce48fbf21922e8077e`
-        );
+        if(password)
+            expect(seed).toEqual(
+                `b0877e09354e2c52eaee443b1d645b2ab64118d1d5288a3cbae091a0975bbf73b38c6c1a465ec90647fc2a943923304ea2f0facbf62cd7c5808e4b192030e607`
+            );
+        else
+            expect(seed).toEqual(
+                `c3b33053071792948d400db74118b83d9b13e990498343c0fc841bd386039557de6186d3c2465dce58a4cf3bbef24009f5d2c19be5b781bdc4058a155a682c0e`
+            );
 
-        
+        console.dir(walletBitcoinBech32, { colors: true, depth: 2 });        
     })
 
 

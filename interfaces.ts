@@ -7,6 +7,7 @@ export interface MultiAccountHDWallet extends HDWallet {
 export interface HDWallet {
   mnemonic: string;
   seed: string;
+  fingerprint: string;
   root: BIP32Interface;
   account: BIP32Interface;
   wallets: Wallet[];

@@ -206,10 +206,10 @@ describe("Crypto Wallet HD", () => {
     // })
 
 
-    // test("should check for DogeCoin format", async () => {
+    test.only("should check for DogeCoin format", async () => {
     //     const { seed, mnemonic, wallets, root } = walletDogeCoin;
 
-    //     // console.dir(walletEthereum, { depth: null, colors: true });
+        console.dir(walletEthereum, { depth: null, colors: true });
 
     //     console.dir(walletBitcoinBech32, { depth: null, colors: true });
 
@@ -217,7 +217,7 @@ describe("Crypto Wallet HD", () => {
     //     // expect(wallets[0].address).toBe("D5VcJFXn8rhMa6PthptYnAiBd6tqJCwJfs")
     //     // expect(wallets[0].publicKey).toBe("0288b809c391bc14b3604d97de73c1a27beef3cfecfdafc628ff25a8a2d28ff17a")
     //     // expect(wallets[0].privateKey).toBe("QNfcLvVUxNSNGEFMvZFNFj9rx3vFjJnUQ9qfDNLJvL5CsTkNcwfD")
-    // })
+    })
 
     test("Private keys can be hidden or displayed at creation", async () => {
         walletBitcoinLegacy.wallets.map(wallet => expect(wallet).not.toHaveProperty("privateKey"))

@@ -3,6 +3,9 @@ import {
   TinySecp256k1Interface as TinySecp256k1Interface_BIP32,
 } from "bip32";
 
+
+import {} from '@bitcoinjs/hdwallet'
+
 import {
   ECPairFactory,
   ECPairInterface,
@@ -33,8 +36,19 @@ import { walletParams, AddressTypes, BIPs, HDWallet, CoinTypes, Wallet } from ".
 // import { Web3Account, Wallet as EthWallet} from 'web3-eth-accounts';
 // let accountProvider: Web3AccountProvider<Web3BaseWalletAccount>;
 
+// functional
+// import * as Web3Account from 'web3-eth-accounts'
+// let accounts = Web3Account;
+
+// import { Web3Account } from 'web3-eth-accounts'
+// import { accounts } from "web3/lib/commonjs/eth.exports";
+
 import { Web3, AccountObject } from "web3";
+import { bitcoin } from "bitcoinjs-lib/src/networks";
+// let accounts = new Web3().eth.accounts;
 let accounts = new Web3('https://rpc.sepolia.org').eth.accounts;
+
+// let ethAccounts = Web3Account ('https://rpc.sepolia.org').eth.accounts;
 
 // const wallet = new EthWallet(accountProvider);
 
@@ -51,6 +65,8 @@ export async function createHDWallet(params: walletParams = {
 
   if (!mnemonic) mnemonic = generateMnemonic();
   if (!mnemonic) throw new Error("Mnemonic is required");
+
+
   
   const mnemonicsSplited = mnemonic.split(" ");
   let mnemonicsValid = mnemonicsSplited.map((mnemonicWord, i)=> wordlists.english.find((word)=>mnemonicWord===word) )
@@ -146,7 +162,7 @@ export async function createHDWallet(params: walletParams = {
       publicKey = `0x${publicKey}`;
       privateKey = paymentFunctionResult.privateKey!;
 
-      let ec: ECPairInterface = ECPairFactory(ecc as TinySecp256k1Interface).fromPrivateKey(derivedPath.privateKey!);
+      // let ec: ECPairInterface = ECPairFactory(ecc as TinySecp256k1Interface).fromPrivateKey(derivedPath.privateKey!);
       // console.log(privateKey, "private ", `0x${ec.privateKey?.toString('hex')}`);
       // console.log(publicKey, "public ", `0x${ec.publicKey?.toString('hex')}`);
     }

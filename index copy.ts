@@ -4,6 +4,7 @@ import {
 } from "bip32";
 
 import {
+  ECPairAPI,
   ECPairFactory,
   ECPairInterface,
   TinySecp256k1Interface,
@@ -11,13 +12,14 @@ import {
 
 import * as ecc from "tiny-secp256k1";
 
+import { keccak_256, } from "js-sha3" //ethereum uses it
+
 import {
   mnemonicToSeed,
   generateMnemonic,
   entropyToMnemonic,
   setDefaultWordlist,
   getDefaultWordlist,
-  validateMnemonic,
   wordlists,
 } from "bip39"
 
@@ -50,16 +52,14 @@ export async function createHDWallet(params: walletParams = {
   if (!coinType) coinType = CoinTypes.Bitcoin;
 
   if (!mnemonic) mnemonic = generateMnemonic();
-  if (!mnemonic) throw new Error("Mnemonic is required");
-  
-  const mnemonicsSplited = mnemonic.split(" ");
-  let mnemonicsValid = mnemonicsSplited.map((mnemonicWord, i)=> wordlists.english.find((word)=>mnemonicWord===word) )
-  if (JSON.stringify(mnemonicsSplited) !== JSON.stringify(mnemonicsValid)) throw new Error('Mnemonic word not found')
-  
-  if(!validateMnemonic(mnemonic)) throw new Error('Mnemonic not valid')
 
-  if (!new RegExp(`m\/${bip}'?\/`).test(derivationPath!))
+  if (!mnemonic) {
+    throw new Error("Mnemonic is required");
+  }
+
+  if (!new RegExp(`m\/${bip}'?\/`).test(derivationPath!)) {
     throw new Error(`Derivation Path ${derivationPath} is wrong compared to bip ${bip}`);
+  }
 
   const seed = (password) ? await mnemonicToSeed(mnemonic, password) : await mnemonicToSeed(mnemonic);
   // const seedPassword = await mnemonicToSeed(mnemonic + ' password');
@@ -69,45 +69,31 @@ export async function createHDWallet(params: walletParams = {
   // Secp256k1 - https://river.com/learn/terms/s/secp256k1/
   // Elliptic Curve Digital Signature Algorithm - https://learnmeabitcoin.com/technical/ecdsa
   const root = BIP32Factory(ecc as TinySecp256k1Interface_BIP32).fromSeed(seed, network);
-  // const rootPassword = BIP32Factory(ecc as TinySecp256k1Interface_BIP32).fromSeed(seed, network);
-
-  const fingerprint = root.fingerprint.toString('hex');
   // const rootPassword = BIP32Factory(ecc as TinySecp256k1Interface_BIP32).fromSeed(seedPassword, network);
 
   let HDWallet: HDWallet = {
     wallets: [],
     mnemonic,
     seed: seed.toString("hex"),
-    fingerprint,
     root,
     account: root.derivePath(derivationPath?.replace(/(?<account>m\/\d+'?\/\d+'?\/\d+'?).*/, "$1")!), // https://regex101.com/r/lyJ63Z/1
     metadata
   } as HDWallet;
 
-  // let HDWalletPassword: HDWallet = {
-  //   wallets: [],
-  //   mnemonic: mnemonic,
-  //   seed: seedPassword.toString("hex"),
-  //   fingerprint,
-  //   root: rootPassword,
-  //   account: rootPassword.derivePath(derivationPath?.replace(/(?<account>m\/\d+'?\/\d+'?\/\d+'?).*/, "$1")!), // https://regex101.com/r/lyJ63Z/1
-  //   metadata
-  // } as HDWallet;
-
   let HDWalletPassword: HDWallet = {
     wallets: [],
     mnemonic,
-    fingerprint,
     seed: seed.toString("hex"),
     root,
     account: root.derivePath(derivationPath?.replace(/(?<account>m\/\d+'?\/\d+'?\/\d+'?).*/, "$1")!), // https://regex101.com/r/lyJ63Z/1
     metadata
   } as HDWallet;
 
-  if (!bip)
+  if (!bip) {
     throw new Error(`List of BIPs must not to be undefined`)
+  }
 
-  for (let i: number = 0; i < 20; i++) {
+  for (let i: number = 0; i < 3; i++) {
     let metadata = {};
     const derivationPathDeafult = `m/${bip}'/${coinType}'/0'/0`;
     const derivedPath = root.derivePath(derivationPath || derivationPathDeafult).derive(i);
@@ -134,7 +120,6 @@ export async function createHDWallet(params: walletParams = {
     }
     else if (bip == BIPs.BIP84 && addressType == AddressTypes.NativeSegWit && coinType == CoinTypes.Bitcoin) {
       paymentFunctionResult = payments.p2wpkh({ network, pubkey });
-      // https://github.com/bitcoinbook/bitcoinbook/blob/develop/ch06.asciidoc#pay-to-public-key-hash-p2pkh
     }
     else if (coinType == CoinTypes.Ethereum) {
       // paymentFunctionResult = accounts.privateKeyToAccount(
@@ -159,7 +144,9 @@ export async function createHDWallet(params: walletParams = {
 
     address = paymentFunctionResult.address || "";
 
-    if (!address) throw new Error(`Missing address`);
+    if (!address) {
+      throw new Error(`Missing address`)
+    }
 
     let wallet = {
       derivedPath: `${derivationPath}/${i}`,
@@ -168,7 +155,7 @@ export async function createHDWallet(params: walletParams = {
       ...(showPrivateKeys ?? false ? { privateKey } : {}),
       metadata,
     } as Wallet;
-
+    // console.log(wallet);
     HDWallet.wallets.push(wallet);
   }
 

@@ -36,8 +36,9 @@ export interface walletParams {
 export enum BIPs {
   BIP32 = 32,
   BIP44 = 44, 
-  BIP49 = 49,
-  BIP84 = 84 
+  BIP48 = 48,
+  BIP84 = 84,
+  BIP49 = 49
 }
 
 
@@ -51,7 +52,8 @@ export enum CoinTypes {
 export enum AddressTypes {
   BitcoinLegacy = "BitcoinLegacy",
   SegWit = "SegWit",
-  NativeSegWit = "NativeSegWit"
+  NativeSegWit = "NativeSegWit",
+  NativeSegWitMultisig = "NativeSegWitMultisig"
 }
 // bip 32 derivation path : `m/0'/0'/0 =>      m  /                        account' / change'/ address_index
 // bip 44 derivation path : `m/84'/2'/0'/0` => m / purpose' / coin_type' / account' / change / address_index

@@ -62,13 +62,13 @@ export enum AddressTypes {
 
 export enum DerivationPaths {
   BIP32 = `m/0'/0'`,
-  SOL_BIP44 = `m/44'/501'/0'/0`,
-  BTC_BIP44 = `m/44'/0'/0'/0`,
-  BTC_BIP49 = `m/49'/0'/0'/0`,
-  BTC_BIP84 = `m/84'/0'/0'/0`,
-  BTC_LEDGER = `m/84'/0'/0'/0`,
-  ETH_BIP44 = `m/44'/60'/0'/0`,
-  ETH_BIP84 = `m/84'/60'/0'/0`
+  SOL_BIP44 = "m/44'/501'/0'/0",
+  BTC_BIP44 = "m/44'/0'/0'/0",
+  BTC_BIP49 = "m/49'/0'/0'/0",
+  BTC_BIP84 = "m/84'/0'/0'/0",
+  BTC_LEDGER = "m/84'/0'/0'/0",
+  ETH_BIP44 = "m/44'/60'/0'/0",
+  ETH_BIP84 = "m/84'/60'/0'/0"
 }
 
 export const walletParamsDefaults: {

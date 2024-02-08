@@ -3,118 +3,57 @@ import {
   TinySecp256k1Interface as TinySecp256k1Interface_BIP32,
 } from "bip32";
 
-
-import {} from '@bitcoinjs/hdwallet'
-
-import {
-  ECPairFactory,
-  ECPairInterface,
-  TinySecp256k1Interface,
-} from "ecpair";
+import { BitcoinService } from './bitcoin.service';
+import { EthereumService } from './ethereum.service';
 
 import * as ecc from "tiny-secp256k1";
+
+import * as web3Solana from "@solana/web3.js";
+
 
 import {
   mnemonicToSeed,
   generateMnemonic,
-  entropyToMnemonic,
-  setDefaultWordlist,
-  getDefaultWordlist,
   validateMnemonic,
-  wordlists,
 } from "bip39"
 
-import { Network, Payment, payments, Psbt } from "bitcoinjs-lib"
-
-// import { createHash } from "crypto";
+import { networks } from "bitcoinjs-lib"
 
 import { walletParams, AddressTypes, BIPs, HDWallet, CoinTypes, Wallet } from "./interfaces"
 
 
-// import { Web3AccountProvider, Web3BaseWalletAccount, KeyStore } from 'web3-types';
-
-// import { Web3Account, Wallet as EthWallet} from 'web3-eth-accounts';
-// let accountProvider: Web3AccountProvider<Web3BaseWalletAccount>;
-
-// functional
-// import * as Web3Account from 'web3-eth-accounts'
-// let accounts = Web3Account;
-
-// import { Web3Account } from 'web3-eth-accounts'
-// import { accounts } from "web3/lib/commonjs/eth.exports";
-
-import { Web3, AccountObject } from "web3";
-import { bitcoin } from "bitcoinjs-lib/src/networks";
-// let accounts = new Web3().eth.accounts;
-let accounts = new Web3('https://rpc.sepolia.org').eth.accounts;
-
-// let ethAccounts = Web3Account ('https://rpc.sepolia.org').eth.accounts;
-
-// const wallet = new EthWallet(accountProvider);
-
 export async function createHDWallet(params: walletParams = {
   showPrivateKeys: false,
-  addressType: AddressTypes.NativeSegWit,
   bip: BIPs.BIP84
 }): Promise<HDWallet | null> {
 
   let { network, derivationPath, coinType, mnemonic, bip, addressType, showPrivateKeys, password } = params;
   let metadata: any;
 
+  if (!derivationPath) throw new Error("Derivation path is required");
   if (!coinType) coinType = CoinTypes.Bitcoin;
 
   if (!mnemonic) mnemonic = generateMnemonic();
   if (!mnemonic) throw new Error("Mnemonic is required");
 
-
-  
-  const mnemonicsSplited = mnemonic.split(" ");
-  let mnemonicsValid = mnemonicsSplited.map((mnemonicWord, i)=> wordlists.english.find((word)=>mnemonicWord===word) )
-  if (JSON.stringify(mnemonicsSplited) !== JSON.stringify(mnemonicsValid)) throw new Error('Mnemonic word not found')
-  
-  if(!validateMnemonic(mnemonic)) throw new Error('Mnemonic not valid')
+  if (!validateMnemonic(mnemonic)) throw new Error('Mnemonic not valid')
 
   if (!new RegExp(`m\/${bip}'?\/`).test(derivationPath!))
     throw new Error(`Derivation Path ${derivationPath} is wrong compared to bip ${bip}`);
 
   const seed = (password) ? await mnemonicToSeed(mnemonic, password) : await mnemonicToSeed(mnemonic);
-  // const seedPassword = await mnemonicToSeed(mnemonic + ' password');
 
-  // Secp256k1 is the name of the elliptic curve used by Bitcoin to implement its public key cryptography. 
-  // All points on this curve are valid Bitcoin public keys.
-  // Secp256k1 - https://river.com/learn/terms/s/secp256k1/
-  // Elliptic Curve Digital Signature Algorithm - https://learnmeabitcoin.com/technical/ecdsa
   const root = BIP32Factory(ecc as TinySecp256k1Interface_BIP32).fromSeed(seed, network);
-  // const rootPassword = BIP32Factory(ecc as TinySecp256k1Interface_BIP32).fromSeed(seed, network);
+  const rootPassword = BIP32Factory(ecc as TinySecp256k1Interface_BIP32).fromSeed(seed, network);
 
   const fingerprint = root.fingerprint.toString('hex');
-  // const rootPassword = BIP32Factory(ecc as TinySecp256k1Interface_BIP32).fromSeed(seedPassword, network);
 
   let HDWallet: HDWallet = {
     wallets: [],
     mnemonic,
+    ...(password ? { password } : {}),
     seed: seed.toString("hex"),
     fingerprint,
-    root,
-    account: root.derivePath(derivationPath?.replace(/(?<account>m\/\d+'?\/\d+'?\/\d+'?).*/, "$1")!), // https://regex101.com/r/lyJ63Z/1
-    metadata
-  } as HDWallet;
-
-  // let HDWalletPassword: HDWallet = {
-  //   wallets: [],
-  //   mnemonic: mnemonic,
-  //   seed: seedPassword.toString("hex"),
-  //   fingerprint,
-  //   root: rootPassword,
-  //   account: rootPassword.derivePath(derivationPath?.replace(/(?<account>m\/\d+'?\/\d+'?\/\d+'?).*/, "$1")!), // https://regex101.com/r/lyJ63Z/1
-  //   metadata
-  // } as HDWallet;
-
-  let HDWalletPassword: HDWallet = {
-    wallets: [],
-    mnemonic,
-    fingerprint,
-    seed: seed.toString("hex"),
     root,
     account: root.derivePath(derivationPath?.replace(/(?<account>m\/\d+'?\/\d+'?\/\d+'?).*/, "$1")!), // https://regex101.com/r/lyJ63Z/1
     metadata
@@ -125,55 +64,30 @@ export async function createHDWallet(params: walletParams = {
 
   for (let i: number = 0; i < 20; i++) {
     let metadata = {};
-    const derivationPathDeafult = `m/${bip}'/${coinType}'/0'/0`;
-    const derivedPath = root.derivePath(derivationPath || derivationPathDeafult).derive(i);
+    const derivedPath = root.derivePath(derivationPath).derive(i);
 
-    let pubkey = derivedPath.publicKey;
-
-    let privateKey: string = derivedPath.toWIF();
+    let privateKey: string | Buffer = derivedPath.privateKey!;
     let publicKey: string = derivedPath.publicKey.toString("hex");
-    let address: string;
 
-    interface IPayment extends Payment {
-      privateKey?: string
+    let address: string | undefined;
+    switch (coinType) {
+      case CoinTypes.Bitcoin:
+        if(!addressType) throw new Error(`Missing address type`)
+        address = BitcoinService.getAddress(derivedPath.publicKey, addressType, networks.bitcoin);
+        privateKey = derivedPath.toWIF();
+        break;
+      case CoinTypes.Ethereum:
+        if (!derivedPath.privateKey)
+          throw new Error(`Missing private key for derivation path ${derivationPath}`)
+        address = EthereumService.getAddress(derivedPath.privateKey);
+        publicKey = `0x${publicKey}`;
+        break
+      case CoinTypes.Solana:
+        address = new web3Solana.PublicKey(publicKey).toBase58();
+        console.error("sol address",address);
+      default:
+        break;
     }
-    let paymentFunctionResult: IPayment | null = null; //| Account;
-
-    if (bip == BIPs.BIP44 && addressType == AddressTypes.BitcoinLegacy && coinType == CoinTypes.Bitcoin) {
-      paymentFunctionResult = paymentFunction(payments.p2pkh, network, pubkey);
-    }
-    else if (bip == BIPs.BIP48 && addressType == AddressTypes.NativeSegWitMultisig && coinType == CoinTypes.Bitcoin) {
-      paymentFunctionResult = payments.p2sh({ redeem: payments.p2wsh({ pubkey, network }), network });
-    }
-    else if (bip == BIPs.BIP49 && addressType == AddressTypes.SegWit && coinType == CoinTypes.Bitcoin) {
-      paymentFunctionResult = payments.p2sh({ redeem: payments.p2wpkh({ pubkey, network }), network });
-    }
-    else if (bip == BIPs.BIP84 && addressType == AddressTypes.NativeSegWit && coinType == CoinTypes.Bitcoin) {
-      paymentFunctionResult = payments.p2wpkh({ network, pubkey });
-      // https://github.com/bitcoinbook/bitcoinbook/blob/develop/ch06.asciidoc#pay-to-public-key-hash-p2pkh
-    }
-    else if (coinType == CoinTypes.Ethereum) {
-      // paymentFunctionResult = accounts.privateKeyToAccount(
-      //   derivedPath.privateKey!.toString("hex")
-      // );
-      paymentFunctionResult = accounts.privateKeyToAccount(
-        derivedPath.privateKey!
-      );
-      publicKey = `0x${publicKey}`;
-      privateKey = paymentFunctionResult.privateKey!;
-
-      // let ec: ECPairInterface = ECPairFactory(ecc as TinySecp256k1Interface).fromPrivateKey(derivedPath.privateKey!);
-      // console.log(privateKey, "private ", `0x${ec.privateKey?.toString('hex')}`);
-      // console.log(publicKey, "public ", `0x${ec.publicKey?.toString('hex')}`);
-    }
-    else if (bip === BIPs.BIP44) {
-      paymentFunctionResult = payments.p2pkh({ network, pubkey });
-    }
-
-    if (!paymentFunctionResult)
-      throw new Error(`Payment type does not match for bip ${bip} and addressType ${addressType}`)
-
-    address = paymentFunctionResult.address || "";
 
     if (!address) throw new Error(`Missing address`);
 
@@ -189,9 +103,4 @@ export async function createHDWallet(params: walletParams = {
   }
 
   return HDWallet as HDWallet;
-}
-
-
-function paymentFunction(paymentFunction: any, network: Network | undefined, pubkey: Buffer) {
-  return paymentFunction({ network, pubkey }) as Payment;
 }

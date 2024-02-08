@@ -38,6 +38,7 @@
     "typescript": "^4.9.5"
   },
   "dependencies": {
+    "@solana/web3.js": "^1.90.0",
     "@types/web3": "^1.2.2",
     "@types/ws": "^8.5.10",
     "axios": "^1.2.2",

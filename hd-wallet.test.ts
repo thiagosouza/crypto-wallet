@@ -6,13 +6,14 @@ import { Network, networks, payments } from "bitcoinjs-lib";
 import { createHDWallet } from "./index"
 import { Sochain } from "./service.sochain";
 import { BIPs, DerivationPaths, HDWallet, AddressTypes, CoinTypes, walletParamsDefaults, walletParams } from "./interfaces";
-
+  
 
 
 describe("Crypto Wallet HD", () => {
 
     let mnemonicWellKnow = 'tooth truth silk body rent ticket text great degree surge space color';
-    let password: string | undefined = 'test1234';
+    // let password: string | undefined = 'test1234';
+    let password: string | undefined;;
 
     let walletBitcoinLegacyBip44: HDWallet
     let walletBitcoinLegacy: HDWallet
@@ -20,6 +21,7 @@ describe("Crypto Wallet HD", () => {
     let walletBitcoinSegWit: HDWallet
     let walletBitcoinBech32: HDWallet
     let walletBitcoinBech32WithPassword: HDWallet;
+    let walletSolana: HDWallet;
 
     let walletEthereum: HDWallet
     // let walletDogeCoin: HDWallet
@@ -109,6 +111,16 @@ describe("Crypto Wallet HD", () => {
         //     addressType: AddressTypes.BitcoinLegacy,
         //     showPrivateKeys: false
         // }) as HDWallet;
+
+        
+        walletSolana = await createHDWallet({
+            mnemonic: mnemonicWellKnow,
+            derivationPath: DerivationPaths.SOL_BIP44,
+            coinType: CoinTypes.Solana,
+            bip: BIPs.BIP44,
+            showPrivateKeys: true,
+            ...((password) ? { password } : {})
+        }) as HDWallet;
     });
 
     test("should be able to create a BIP32 wallet using interfaces", async () => {
@@ -125,8 +137,9 @@ describe("Crypto Wallet HD", () => {
 
         expect(mnemonicWellKnow).toEqual(mnemonic);
 
-        // const mnemonics = mnemonicWellKnow.split(" ")
-        // wordlists
+        const mnemonicsSplited = mnemonic.split(" ");
+        let mnemonicsValid = mnemonicsSplited.map((mnemonicWord, i)=> wordlists.english.find((word)=>mnemonicWord===word) )
+        expect(JSON.stringify(mnemonicsSplited)).toEqual(JSON.stringify(mnemonicsValid));
     })
 
     test("Should have the same seed", async () => {
@@ -141,7 +154,7 @@ describe("Crypto Wallet HD", () => {
                 `c3b33053071792948d400db74118b83d9b13e990498343c0fc841bd386039557de6186d3c2465dce58a4cf3bbef24009f5d2c19be5b781bdc4058a155a682c0e`
             );
 
-        console.dir(walletBitcoinBech32, { colors: true, depth: 2 });        
+        // console.dir(walletBitcoinBech32, { colors: true, depth: 2 });        
     })
 
 
@@ -206,10 +219,10 @@ describe("Crypto Wallet HD", () => {
     // })
 
 
-    test.only("should check for DogeCoin format", async () => {
+    test("should check for DogeCoin format", async () => {
     //     const { seed, mnemonic, wallets, root } = walletDogeCoin;
 
-        console.dir(walletEthereum, { depth: null, colors: true });
+        // console.dir(walletEthereum, { depth: null, colors: true });
 
     //     console.dir(walletBitcoinBech32, { depth: null, colors: true });
 
@@ -226,14 +239,14 @@ describe("Crypto Wallet HD", () => {
     })
 
     describe("Bitcoin", () => {
-        test("should generate properly Bitcoin wallets", async () => {
+        test.only("should generate properly Bitcoin wallets", async () => {
             expect(walletBitcoinLegacyBip44).toBeDefined;
             expect(walletBitcoinLegacy).toBeDefined;
             expect(walletBitcoinLegacyContainingPrivateKeys).toBeDefined;
             expect(walletBitcoinSegWit).toBeDefined;
             expect(walletBitcoinBech32).toBeDefined;
 
-            // console.log(walletBitcoinBech32)
+            console.dir(walletSolana)
 
 
         })
@@ -260,10 +273,10 @@ describe("Crypto Wallet HD", () => {
     // })
 
 
-    describe.only("Ethereum", () => {
+    describe("Ethereum", () => {
         test("Should create Ethereum addresses properly", async () => {
 
-            console.dir(walletEthereum, { depth: 3, colors: true });
+            // console.dir(walletEthereum, { depth: 3, colors: true });
 
             const { seed, mnemonic, wallets, root } = walletEthereum;
             wallets.map(wallet => expect(wallet.address).toMatch(/^0x.*/));

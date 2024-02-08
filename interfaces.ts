@@ -6,6 +6,7 @@ export interface MultiAccountHDWallet extends HDWallet {
 
 export interface HDWallet {
   mnemonic: string;
+  password: string;
   seed: string;
   fingerprint: string;
   root: BIP32Interface;
@@ -28,7 +29,7 @@ export interface walletParams {
   network?: Network;
   mnemonic?: string;
   bip: BIPs;
-  addressType: AddressTypes;
+  addressType?: AddressTypes;
   showPrivateKeys: boolean;
   password?: string;
 }
@@ -46,7 +47,8 @@ export enum BIPs {
 export enum CoinTypes {
   Bitcoin = "0",
   Ethereum = "60",
-  DogeCoin = "3"
+  DogeCoin = "3",
+  Solana = "501",
 }
 
 export enum AddressTypes {
@@ -60,6 +62,7 @@ export enum AddressTypes {
 
 export enum DerivationPaths {
   BIP32 = `m/0'/0'`,
+  SOL_BIP44 = `m/44'/501'/0'/0`,
   BTC_BIP44 = `m/44'/0'/0'/0`,
   BTC_BIP49 = `m/49'/0'/0'/0`,
   BTC_BIP84 = `m/84'/0'/0'/0`,

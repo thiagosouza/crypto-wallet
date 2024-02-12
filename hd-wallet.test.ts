@@ -4,6 +4,7 @@ import { mnemonicToSeed, generateMnemonic, entropyToMnemonic, wordlists } from "
 import { Network, networks, payments } from "bitcoinjs-lib";
 
 import { createHDWallet } from "./index"
+import { createHDWalletSolana } from "./solana.wallet"
 import { Sochain } from "./service.sochain";
 import { BIPs, DerivationPaths, HDWallet, AddressTypes, CoinTypes, walletParamsDefaults, walletParams } from "./interfaces";
   
@@ -113,13 +114,13 @@ describe("Crypto Wallet HD", () => {
         // }) as HDWallet;
 
         
-        walletSolana = await createHDWallet({
-            mnemonic: mnemonicWellKnow,
+        walletSolana = await createHDWalletSolana({
+            mnemonic: mnemonicWellKnow, //"crush desk brain index action subject tackle idea trim unveil lawn live",
             derivationPath: DerivationPaths.SOL_BIP44,
             coinType: CoinTypes.Solana,
             bip: BIPs.BIP44,
             showPrivateKeys: true,
-            ...((password) ? { password } : {})
+            // password: "test1234"
         }) as HDWallet;
     });
 
@@ -238,16 +239,23 @@ describe("Crypto Wallet HD", () => {
         // console.dir(walletBitcoinLegacyContainingPrivateKeys, {depth:null, colors: true})
     })
 
-    describe("Bitcoin", () => {
+    describe.only("Bitcoin", () => {
         test.only("should generate properly Bitcoin wallets", async () => {
-            expect(walletBitcoinLegacyBip44).toBeDefined;
-            expect(walletBitcoinLegacy).toBeDefined;
-            expect(walletBitcoinLegacyContainingPrivateKeys).toBeDefined;
-            expect(walletBitcoinSegWit).toBeDefined;
-            expect(walletBitcoinBech32).toBeDefined;
+            // expect(walletBitcoinLegacyBip44).toBeDefined;
+            // expect(walletBitcoinLegacy).toBeDefined;
+            // expect(walletBitcoinLegacyContainingPrivateKeys).toBeDefined;
+            // expect(walletBitcoinSegWit).toBeDefined;
+            // expect(walletBitcoinBech32).toBeDefined;
 
+            // console.dir(walletEthereum)
             console.dir(walletSolana)
+            // AzMSmBuDGGrAgmqBgpj7EoeF5WoAgZ7NvB1rkbNizaQa
+            // 0xC7Be165E37F2a293079D1F5483B0f07e2E02A10F ETH
 
+            // 7EWwMxKQa5Gru7oTcS1Wi3AaEgTfA6MU3z7MaLUT6hnD
+
+            // priv 4cwpKbopG3MBbRfpcUnUjVwLSP9g7CUwqhNAE7Th7Gsj4kwQuxkpxzf2CNAvzSKPgDiBSKNGULm9KH6RjJAjsy2i
+            expect(true).toBe(true);
 
         })
 

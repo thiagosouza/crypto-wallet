@@ -115,12 +115,14 @@ describe("Crypto Wallet HD", () => {
 
         
         walletSolana = await createHDWalletSolana({
-            mnemonic: mnemonicWellKnow, //"crush desk brain index action subject tackle idea trim unveil lawn live",
+            // mnemonic: "deny coach horror slim task pact pole half coil bottom shine supply", 
+            // mnemonic: mnemonicWellKnow,
+            mnemonic: "crush desk brain index action subject tackle idea trim unveil lawn live",
             derivationPath: DerivationPaths.SOL_BIP44,
             coinType: CoinTypes.Solana,
             bip: BIPs.BIP44,
             showPrivateKeys: true,
-            // password: "test1234"
+            password: "test1234"
         }) as HDWallet;
     });
 
@@ -248,7 +250,7 @@ describe("Crypto Wallet HD", () => {
             // expect(walletBitcoinBech32).toBeDefined;
 
             // console.dir(walletEthereum)
-            console.dir(walletSolana)
+            // console.dir(walletSolana)
             // AzMSmBuDGGrAgmqBgpj7EoeF5WoAgZ7NvB1rkbNizaQa
             // 0xC7Be165E37F2a293079D1F5483B0f07e2E02A10F ETH
 

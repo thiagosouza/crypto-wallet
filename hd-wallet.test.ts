@@ -114,16 +114,16 @@ describe("Crypto Wallet HD", () => {
         // }) as HDWallet;
 
         
-        walletSolana = await createHDWalletSolana({
-            // mnemonic: "deny coach horror slim task pact pole half coil bottom shine supply", 
-            // mnemonic: mnemonicWellKnow,
-            mnemonic: "crush desk brain index action subject tackle idea trim unveil lawn live",
-            derivationPath: DerivationPaths.SOL_BIP44,
-            coinType: CoinTypes.Solana,
-            bip: BIPs.BIP44,
-            showPrivateKeys: true,
-            password: "test1234"
-        }) as HDWallet;
+        // walletSolana = await createHDWalletSolana({
+        //     // mnemonic: "deny coach horror slim task pact pole half coil bottom shine supply", 
+        //     // mnemonic: mnemonicWellKnow,
+        //     mnemonic: "crush desk brain index action subject tackle idea trim unveil lawn live",
+        //     derivationPath: DerivationPaths.SOL_BIP44,
+        //     coinType: CoinTypes.Solana,
+        //     bip: BIPs.BIP44,
+        //     showPrivateKeys: true,
+        //     password: "test1234"
+        // }) as HDWallet;
     });
 
     test("should be able to create a BIP32 wallet using interfaces", async () => {

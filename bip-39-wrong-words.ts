@@ -102,3 +102,7 @@ import {
   }).then(wallet=>{
     console.log(wallet)
   })
+
+// npm run setup
+// npx ts-node bip-39-wrong-words.ts
+  
